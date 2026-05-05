@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V6 資安與空間優化版)</title>
+  <title>野外生態調查 App (V7 終極穩定版)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -69,15 +69,13 @@
   
   <div id="view-input">
     <div id="screen-metadata" class="section">
-      <!-- 依照您的需求修改的標題與輸入框 -->
-      <h2>生態調查即時資料處理系統</h2>
+      <h1>生態調查資料處理系統</h1>
       <h2>📋 專案與樣站設定</h2>
       <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪周邊生態調查案">
       <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一(可留白)">
       <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪周邊(可留白)">
       <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A(可留白)">
       
-      <!-- 新增：資安授權碼 -->
       <label style="color: #d32f2f;">🔐 系統授權碼 (連接雲端必填)</label>
       <input type="password" id="sys-auth" placeholder="請輸入公司授權碼" style="border-color: #d32f2f;">
 
@@ -93,8 +91,6 @@
         <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備：預載離線圖資</p>
         <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖並搜尋樣區</button>
         <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">請在有網路時打開此功能，移動並放大調查區域，看過的畫面將會永久儲存供離線使用。</p>
-        
-        <!-- 新增：清除離線地圖空間按鈕 -->
         <button class="btn-secondary" style="margin-top: 15px; border-color:#d32f2f; color:#d32f2f; background-color: #ffebee;" onclick="clearMapCache()">🗑️ 清除已下載的離線地圖 (釋放手機空間)</button>
       </div>
 
@@ -178,8 +174,8 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
-  // GAS_URL_V7
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxdZPTzT2Ir6OKvf4SoYxrvgUnK8hOn8-v7YeqzkiK3Nt0igZW4Ni8Vrxe6dttLEGV1Fw/exec";
+  // 您的專屬 GAS 網址
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwj8WjI6OzSMgTGEWp_KJhmnn2EVUL0czo99evC4_BwSZ5Jjcq4gb_KktT_swybk6pT-g/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
   let speciesCatalog = JSON.parse(localStorage.getItem("speciesCatalog")) || [];
@@ -193,7 +189,6 @@
   window.onload = function() {
     updateCatalogStatus();
     updateStagingBadge();
-    // 自動填入上次輸入的授權碼
     const savedAuth = localStorage.getItem("sysAuthCode");
     if(savedAuth) document.getElementById("sys-auth").value = savedAuth;
   }
@@ -206,7 +201,6 @@
     }
   }
 
-  // === 清除地圖快取功能 ===
   function clearMapCache() {
     if(confirm("確定要清除所有預載的離線地圖嗎？這將釋放手機空間，但斷網時將無法查看地圖。")) {
       if ('caches' in window) {
@@ -218,11 +212,11 @@
     }
   }
 
-  // === 下載名錄 (帶入密碼驗證) ===
+  // === 【升級】使用 POST 請求下載名錄，不怕網址參數被吃掉！ ===
   function syncCatalog() {
     const authCode = document.getElementById("sys-auth").value.trim();
     if(!authCode) return alert("請先輸入系統授權碼！");
-    localStorage.setItem("sysAuthCode", authCode); // 儲存密碼
+    localStorage.setItem("sysAuthCode", authCode); 
 
     const btn = document.getElementById("btn-sync");
     const progressContainer = document.getElementById("progress-container");
@@ -242,38 +236,44 @@
       progressBar.style.width = progress + "%";
     }, 200);
 
-    // 將密碼附加在網址後面傳送
-    fetch(GAS_URL + "?auth=" + encodeURIComponent(authCode))
-      .then(response => response.json())
-      .then(data => {
-        clearInterval(simInterval);
-        progressBar.style.width = "100%";
-        statusText.innerText = "處理資料中...";
+    // 改用 POST，把資料放在暗箱(body)傳送
+    fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "download", auth: authCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+      clearInterval(simInterval);
+      progressBar.style.width = "100%";
+      statusText.innerText = "處理資料中...";
 
-        setTimeout(() => {
-          if (data.error) {
-            alert("❌ " + data.error); // 若密碼錯誤，顯示後端錯誤訊息
-          } else {
-            speciesCatalog = data;
-            localStorage.setItem("speciesCatalog", JSON.stringify(data));
-            statusText.innerText = `已載入 ${data.length} 筆離線名錄`;
-            alert(`✅ 雲端名錄更新成功！共載入 ${data.length} 筆物種。`);
-          }
-          
-          btn.innerText = "🔄 點此從雲端下載最新物種名錄";
-          btn.disabled = false;
-          progressContainer.style.display = "none";
-          progressBar.style.width = "0%";
-        }, 400); 
-      })
-      .catch(error => {
-        clearInterval(simInterval);
-        alert("❌ 下載失敗，請檢查網路連線。");
+      setTimeout(() => {
+        if (data.status === "error" || data.error) {
+          alert("❌ " + (data.error || "未知錯誤"));
+        } else {
+          // 資料改從 data.catalog 取出
+          speciesCatalog = data.catalog;
+          localStorage.setItem("speciesCatalog", JSON.stringify(data.catalog));
+          statusText.innerText = `已載入 ${data.catalog.length} 筆離線名錄`;
+          alert(`✅ 雲端名錄更新成功！共載入 ${data.catalog.length} 筆物種。`);
+        }
+        
         btn.innerText = "🔄 點此從雲端下載最新物種名錄";
         btn.disabled = false;
         progressContainer.style.display = "none";
         progressBar.style.width = "0%";
-      });
+      }, 400); 
+    })
+    .catch(error => {
+      clearInterval(simInterval);
+      alert("❌ 下載失敗，請檢查網路連線。");
+      btn.innerText = "🔄 點此從雲端下載最新物種名錄";
+      btn.disabled = false;
+      progressContainer.style.display = "none";
+      progressBar.style.width = "0%";
+    });
   }
 
   function switchView(viewName) {
@@ -545,11 +545,11 @@
     }
   }
 
-  // === 上傳資料 (加入密碼驗證) ===
+  // === 【升級】上傳資料加入 action = "upload" ===
   function uploadSelected() {
     const authCode = document.getElementById("sys-auth").value.trim();
     if(!authCode) {
-      switchView('input'); // 切換回首頁讓他填密碼
+      switchView('input');
       return alert("請先在首頁填寫系統授權碼！");
     }
 
@@ -561,8 +561,8 @@
     const payloads = {}; 
     itemsToUpload.forEach(item => {
       const sig = `${item.metadata.project}_${item.metadata.area}_${item.metadata.location}_${item.metadata.station}`;
-      // 將 authCode 塞入上傳的包裹中，讓 GAS 後端驗證
-      if (!payloads[sig]) payloads[sig] = { auth: authCode, metadata: item.metadata, records: [] };
+      // 加入 action: "upload" 讓後台辨識
+      if (!payloads[sig]) payloads[sig] = { action: "upload", auth: authCode, metadata: item.metadata, records: [] };
       payloads[sig].records.push(item.record);
     });
 
@@ -571,7 +571,6 @@
     });
 
     Promise.all(uploadPromises).then(results => {
-      // 檢查是否被密碼阻擋
       const authError = results.find(res => res.error || res.status === "error");
       if (authError) {
         alert("❌ " + (authError.message || authError.error));
