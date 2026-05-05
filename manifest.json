@@ -1,0 +1,15 @@
+{
+  "name": "生態調查資料輸入",
+  "short_name": "生態調查",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3204/3204071.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
