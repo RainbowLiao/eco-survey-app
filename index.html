@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V5 預載搜尋版)</title>
+  <title>野外生態調查 App (V5.1 預載+進度條版)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -24,6 +24,10 @@
     .btn-primary { background-color: #2e7d32; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     .btn-secondary { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; padding: 10px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px;}
     .btn-sync { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;}
+    
+    /* 進度條樣式回歸 */
+    #progress-container { width: 100%; background-color: #ffe0b2; border-radius: 8px; margin-top: 15px; overflow: hidden; display: none; height: 12px; }
+    #progress-bar { width: 0%; height: 100%; background-color: #e65100; transition: width 0.3s ease; }
     
     #search-box { position: sticky; top: 52px; background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; z-index: 10; }
     #autocomplete-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; position: absolute; width: calc(100% - 40px); background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -62,20 +66,24 @@
 
 <div class="container">
   
-  <!-- 畫面一：設定與調查區 -->
   <div id="view-input">
     <div id="screen-metadata" class="section">
+      <h1>生態調查即時資料處理系統</h1>
       <h2>📋 專案與樣站設定</h2>
-      <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪支流生態調查專業服務案">
+      <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪周邊生態調查案">
       <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一(可留白)">
       <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪周邊(可留白)">
-      <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站1(可留白)">
+      <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A(可留白)">
       
-      <!-- 更新及時名錄 -->
       <button class="btn-sync" onclick="syncCatalog()" id="btn-sync">🔄 點此從雲端下載最新物種名錄</button>
+      
+      <!-- 進度條區塊回歸 -->
+      <div id="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+      
       <div id="catalog-status" style="text-align: center; font-size: 12px; color: #666; margin-top: 8px;">讀取中...</div>
 
-      <!-- 出發前預載地圖區塊 -->
       <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 30px; border: 1px dashed #2e7d32;">
         <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備：預載離線圖資</p>
         <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖並搜尋樣區</button>
@@ -98,7 +106,6 @@
     </div>
   </div>
 
-  <!-- 畫面二：暫存區 -->
   <div id="view-staging" class="hidden" style="background: #f5f5f5; min-height: 100vh;">
     <header style="background: #1565c0;">📦 待上傳暫存區</header>
     <div class="section" style="padding-bottom: 0;">
@@ -117,13 +124,11 @@
 
 </div>
 
-<!-- 底部導覽列 -->
 <div class="bottom-nav">
   <button class="nav-btn active" id="nav-input" onclick="switchView('input')">📝 調查輸入</button>
   <button class="nav-btn" id="nav-staging" onclick="switchView('staging')">📦 暫存區 <span id="staging-badge" class="badge hidden">0</span></button>
 </div>
 
-<!-- 彈出視窗 (Modal) -->
 <div id="modal-overlay">
   <div id="modal-content">
     <div class="modal-header">
@@ -131,9 +136,8 @@
       <span class="close-btn" onclick="closeModal()">✖</span>
     </div>
 
-    <!-- 預載地圖專用的搜尋列 -->
     <div id="preload-search-bar" class="hidden" style="display: flex; gap: 8px; margin-bottom: 15px;">
-      <input type="text" id="preload-search-input" placeholder="輸入地名(如: 杉林溪) 或 座標(如: 23.6,120.7)" style="margin: 0; flex-grow: 1;">
+      <input type="text" id="preload-search-input" placeholder="輸入地名 或 座標(如: 23.6,120.7)" style="margin: 0; flex-grow: 1;">
       <button class="btn-secondary" style="margin: 0; width: auto; padding: 0 15px; border-color: #1565c0; color: #1565c0;" onclick="searchAndMoveMap()">🔍 跳轉</button>
     </div>
     
@@ -166,7 +170,6 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
-  <!-- 雲端資料庫連線 -->
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwj8WjI6OzSMgTGEWp_KJhmnn2EVUL0czo99evC4_BwSZ5Jjcq4gb_KktT_swybk6pT-g/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
@@ -191,22 +194,56 @@
     }
   }
 
+  // === 恢復 V3.2 的進度條邏輯 ===
   function syncCatalog() {
     const btn = document.getElementById("btn-sync");
-    btn.innerText = "⏳ 下載中..."; btn.disabled = true;
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const statusText = document.getElementById("catalog-status");
+
+    btn.innerText = "⏳ 下載名錄中，請勿關閉視窗...";
+    btn.disabled = true;
+    progressContainer.style.display = "block";
+    progressBar.style.width = "0%";
+    statusText.innerText = "正在向伺服器請求資料...";
+
+    let progress = 0;
+    let simInterval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress > 90) progress = 90;
+      progressBar.style.width = progress + "%";
+    }, 200);
+
     fetch(GAS_URL)
-      .then(r => r.json())
+      .then(response => response.json())
       .then(data => {
-        if (!data.error) {
-          speciesCatalog = data;
-          localStorage.setItem("speciesCatalog", JSON.stringify(data));
-          updateCatalogStatus();
-          alert(`✅ 更新成功！共 ${data.length} 筆。`);
-        }
-        btn.innerText = "🔄 點此從雲端下載最新物種名錄"; btn.disabled = false;
-      }).catch(e => {
-        alert("❌ 下載失敗，請檢查網路。");
-        btn.innerText = "🔄 點此從雲端下載最新物種名錄"; btn.disabled = false;
+        clearInterval(simInterval);
+        progressBar.style.width = "100%";
+        statusText.innerText = "處理資料中...";
+
+        setTimeout(() => {
+          if (data.error) {
+            alert("❌ 下載錯誤：" + data.error);
+          } else {
+            speciesCatalog = data;
+            localStorage.setItem("speciesCatalog", JSON.stringify(data));
+            statusText.innerText = `已載入 ${data.length} 筆離線名錄`;
+            alert(`✅ 雲端名錄更新成功！共載入 ${data.length} 筆物種。現在您可以斷網使用了。`);
+          }
+          
+          btn.innerText = "🔄 點此從雲端下載最新物種名錄";
+          btn.disabled = false;
+          progressContainer.style.display = "none";
+          progressBar.style.width = "0%";
+        }, 400); 
+      })
+      .catch(error => {
+        clearInterval(simInterval);
+        alert("❌ 下載失敗，請檢查網路連線。");
+        btn.innerText = "🔄 點此從雲端下載最新物種名錄";
+        btn.disabled = false;
+        progressContainer.style.display = "none";
+        progressBar.style.width = "0%";
       });
   }
 
@@ -265,13 +302,11 @@
     } else { listEl.classList.add("hidden"); }
   }
 
-  // === Modal 與地圖核心邏輯 ===
   function openModal(species) {
     editingSpecies = species;
     document.getElementById("search-input").value = "";
     document.getElementById("autocomplete-list").classList.add("hidden");
     
-    // 復原為物種輸入模式
     document.getElementById("modal-title").innerText = species.name;
     document.querySelectorAll(".input-element").forEach(el => el.style.display = "");
     document.getElementById("preload-search-bar").classList.add("hidden");
@@ -358,11 +393,9 @@
     updateGpsUI("座標已清空");
   }
 
-  // === V5 地圖預載與搜尋 ===
   function openPreloadMap() {
     document.getElementById("modal-title").innerText = "🗺️ 離線地圖範圍預載";
     
-    // 隱藏一般輸入的 UI
     document.querySelectorAll(".input-element").forEach(el => el.style.display = "none");
     document.getElementById("preload-search-bar").classList.remove("hidden");
     
@@ -393,7 +426,6 @@
     const btn = document.querySelector("#preload-search-bar button");
     btn.innerText = "⏳";
 
-    // 判斷是否為座標 (例: 23.64, 120.78)
     const coordsMatch = query.match(/^(\d+(\.\d+)?)\s*,\s*(\d+(\.\d+)?)$/);
     if (coordsMatch) {
       const lat = parseFloat(coordsMatch[1]); const lng = parseFloat(coordsMatch[3]);
@@ -402,7 +434,6 @@
       btn.innerText = "🔍 跳轉"; return;
     }
 
-    // 使用 OSM Nominatim 搜尋地名
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " 台灣")}`)
       .then(res => res.json())
       .then(data => {
@@ -417,7 +448,6 @@
       });
   }
 
-  // === 儲存與上傳邏輯 ===
   function saveToStaging() {
     let wgs_x = "", wgs_y = "", twd_x = "", twd_y = "";
     if (tempLat && tempLng) {
