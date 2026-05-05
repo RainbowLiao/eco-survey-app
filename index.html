@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V7 終極穩定版)</title>
+  <title>野外生態調查 App (V8)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -60,6 +60,12 @@
     .nav-btn.active { color: #2e7d32; border-top: 3px solid #2e7d32; background: #f1f8e9;}
     .badge { background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; vertical-align: top; margin-left: 5px;}
 
+    /* 地圖搜尋自動完成清單樣式 */
+    .map-search-wrapper { position: relative; width: 100%; display: flex; gap: 8px; margin-bottom: 15px;}
+    #map-search-results { list-style: none; padding: 0; margin: 0; max-height: 220px; overflow-y: auto; border: 1px solid #ccc; position: absolute; width: 100%; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; top: 50px; left: 0; border-radius: 8px;}
+    #map-search-results li { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 16px; cursor: pointer; display: flex; flex-direction: column;}
+    #map-search-results li:active { background-color: #e3f2fd; }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -69,7 +75,7 @@
   
   <div id="view-input">
     <div id="screen-metadata" class="section">
-      <h1>生態調查資料處理系統</h1>
+      <h1>生態調查即時資料處理系統</h1>
       <h2>📋 專案與樣站設定</h2>
       <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪周邊生態調查案">
       <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一(可留白)">
@@ -140,9 +146,14 @@
       <span class="close-btn" onclick="closeModal()">✖</span>
     </div>
 
-    <div id="preload-search-bar" class="hidden" style="display: flex; gap: 8px; margin-bottom: 15px;">
-      <input type="text" id="preload-search-input" placeholder="輸入地名 或 座標(如: 23.6,120.7)" style="margin: 0; flex-grow: 1;">
-      <button class="btn-secondary" style="margin: 0; width: auto; padding: 0 15px; border-color: #1565c0; color: #1565c0;" onclick="searchAndMoveMap()">🔍 跳轉</button>
+    <!-- 升級版：地圖搜尋與智慧選單 -->
+    <div id="preload-search-bar" class="hidden map-search-wrapper">
+      <div style="flex-grow: 1; position: relative;">
+        <input type="text" id="preload-search-input" placeholder="輸入地名 或 座標(如: 23.6,120.7)" style="margin: 0;" oninput="handleMapSearch()">
+        <ul id="map-search-results" class="hidden"></ul>
+      </div>
+      <!-- 保留一顆清除按鈕方便手機操作 -->
+      <button class="btn-secondary" style="margin: 0; width: auto; padding: 0 15px; border-color: #888; color: #888;" onclick="clearMapSearch()">✖</button>
     </div>
     
     <label class="input-element">數量設定</label>
@@ -174,8 +185,7 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
-  // 您的專屬 GAS 網址_V10
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxzY6rdvwOUlhcpdJ0J_lD6_afUgC2ru66on42Ny6UvPTd9Z9Mo6iZ0nNSjJwHAA00rrw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwj8WjI6OzSMgTGEWp_KJhmnn2EVUL0czo99evC4_BwSZ5Jjcq4gb_KktT_swybk6pT-g/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
   let speciesCatalog = JSON.parse(localStorage.getItem("speciesCatalog")) || [];
@@ -185,6 +195,7 @@
   let editingSpecies = null; 
   let map, marker;
   let tempLat = null, tempLng = null;
+  let mapSearchTimeout = null; // 用於地圖搜尋防手震
 
   window.onload = function() {
     updateCatalogStatus();
@@ -212,7 +223,6 @@
     }
   }
 
-  // === 【升級】使用 POST 請求下載名錄，不怕網址參數被吃掉！ ===
   function syncCatalog() {
     const authCode = document.getElementById("sys-auth").value.trim();
     if(!authCode) return alert("請先輸入系統授權碼！");
@@ -236,7 +246,6 @@
       progressBar.style.width = progress + "%";
     }, 200);
 
-    // 改用 POST，把資料放在暗箱(body)傳送
     fetch(GAS_URL, {
       method: 'POST',
       redirect: 'follow',
@@ -253,7 +262,6 @@
         if (data.status === "error" || data.error) {
           alert("❌ " + (data.error || "未知錯誤"));
         } else {
-          // 資料改從 data.catalog 取出
           speciesCatalog = data.catalog;
           localStorage.setItem("speciesCatalog", JSON.stringify(data.catalog));
           statusText.innerText = `已載入 ${data.catalog.length} 筆離線名錄`;
@@ -427,6 +435,8 @@
     
     document.querySelectorAll(".input-element").forEach(el => el.style.display = "none");
     document.getElementById("preload-search-bar").classList.remove("hidden");
+    document.getElementById("preload-search-input").value = "";
+    document.getElementById("map-search-results").classList.add("hidden");
     
     document.getElementById("map-container").style.display = "block";
     document.getElementById("map-container").style.height = "400px"; 
@@ -448,33 +458,76 @@
     } else { showMap(23.6978, 120.9605); }
   }
 
-  function searchAndMoveMap() {
+  // === V8：地圖搜尋智慧選單邏輯 ===
+  function clearMapSearch() {
+    document.getElementById("preload-search-input").value = "";
+    document.getElementById("map-search-results").classList.add("hidden");
+  }
+
+  function handleMapSearch() {
     const query = document.getElementById("preload-search-input").value.trim();
-    if (!query) return alert("請輸入地點或座標！");
+    const listEl = document.getElementById("map-search-results");
 
-    const btn = document.querySelector("#preload-search-bar button");
-    btn.innerText = "⏳";
+    if (!query) {
+      listEl.innerHTML = "";
+      listEl.classList.add("hidden");
+      return;
+    }
 
+    // 若判定為座標格式，直接提供單一跳轉按鈕
+    if (query.match(/^(\d+(\.\d+)?)\s*,\s*(\d+(\.\d+)?)$/)) {
+      listEl.innerHTML = `<li onclick="jumpToCoords('${query}')"><span style="color:#1565c0; font-weight:bold;">📍 跳轉至此座標</span><span style="font-size:14px; color:#666;">${query}</span></li>`;
+      listEl.classList.remove("hidden");
+      return;
+    }
+
+    // 顯示讀取中
+    listEl.innerHTML = `<li style="color:#888; text-align:center; display:block;">搜尋中...</li>`;
+    listEl.classList.remove("hidden");
+
+    // 防手震機制：等使用者停下打字 0.8 秒後再發送請求
+    clearTimeout(mapSearchTimeout);
+    mapSearchTimeout = setTimeout(() => {
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " 台灣")}&limit=5`)
+        .then(res => res.json())
+        .then(data => {
+          listEl.innerHTML = "";
+          if (data && data.length > 0) {
+            data.forEach(place => {
+              const li = document.createElement("li");
+              // 取第一個逗號前當作主地名，後面當作詳細地址
+              const nameParts = place.display_name.split(',');
+              const mainName = nameParts[0];
+              li.innerHTML = `<span style="font-weight:bold; color:#1565c0;">${mainName}</span><span style="font-size:12px; color:#888; margin-top:4px;">${place.display_name}</span>`;
+              
+              li.onclick = () => {
+                document.getElementById("preload-search-input").value = mainName;
+                listEl.classList.add("hidden");
+                const lat = parseFloat(place.lat);
+                const lng = parseFloat(place.lon);
+                if (map) { map.setView([lat, lng], 16); if (marker) marker.setLatLng([lat, lng]); } 
+                else showMap(lat, lng);
+              };
+              listEl.appendChild(li);
+            });
+          } else {
+            listEl.innerHTML = `<li style="color:#d32f2f; text-align:center; display:block;">找不到相關地點，請嘗試輸入更準確的關鍵字</li>`;
+          }
+        }).catch(e => {
+          listEl.innerHTML = `<li style="color:#d32f2f; text-align:center; display:block;">網路連線錯誤，無法搜尋</li>`;
+        });
+    }, 800);
+  }
+
+  function jumpToCoords(query) {
     const coordsMatch = query.match(/^(\d+(\.\d+)?)\s*,\s*(\d+(\.\d+)?)$/);
     if (coordsMatch) {
       const lat = parseFloat(coordsMatch[1]); const lng = parseFloat(coordsMatch[3]);
       if (map) { map.setView([lat, lng], 16); if (marker) marker.setLatLng([lat, lng]); } 
       else showMap(lat, lng);
-      btn.innerText = "🔍 跳轉"; return;
+      document.getElementById("map-search-results").classList.add("hidden");
+      document.getElementById("preload-search-input").value = query;
     }
-
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " 台灣")}`)
-      .then(res => res.json())
-      .then(data => {
-        btn.innerText = "🔍 跳轉";
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat); const lng = parseFloat(data[0].lon);
-          if (map) { map.setView([lat, lng], 16); if (marker) marker.setLatLng([lat, lng]); }
-          else showMap(lat, lng);
-        } else { alert("找不到該地點，請輸入更精確的名稱或使用 WGS84 座標。"); }
-      }).catch(e => {
-        btn.innerText = "🔍 跳轉"; alert("搜尋失敗，請檢查網路連線。");
-      });
   }
 
   function saveToStaging() {
@@ -545,7 +598,6 @@
     }
   }
 
-  // === 【升級】上傳資料加入 action = "upload" ===
   function uploadSelected() {
     const authCode = document.getElementById("sys-auth").value.trim();
     if(!authCode) {
@@ -561,7 +613,6 @@
     const payloads = {}; 
     itemsToUpload.forEach(item => {
       const sig = `${item.metadata.project}_${item.metadata.area}_${item.metadata.location}_${item.metadata.station}`;
-      // 加入 action: "upload" 讓後台辨識
       if (!payloads[sig]) payloads[sig] = { action: "upload", auth: authCode, metadata: item.metadata, records: [] };
       payloads[sig].records.push(item.record);
     });
