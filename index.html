@@ -74,6 +74,13 @@
       <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪">
       <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A">
       
+      <!-- 新增：出發前預載地圖的按鈕 -->
+      <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px dashed #2e7d32;">
+        <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備</p>
+        <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖預載範圍 (有網路時使用)</button>
+        <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">點開後請滑動並放大您預計調查的區域。只要螢幕顯示過的畫面，系統都會自動永久儲存供離線使用。</p>
+      </div>
+      <!-- 新增：即時更新名錄 -->
       <button class="btn-sync" onclick="syncCatalog()" id="btn-sync">🔄 點此從雲端下載最新物種名錄</button>
       <div id="catalog-status" style="text-align: center; font-size: 12px; color: #666; margin-top: 8px;">讀取中...</div>
 
@@ -509,6 +516,52 @@
         alert("❌ 上傳失敗，請確認網路有訊號後再試一次！");
         btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
       });
+  }
+  // === V5 新增：地圖預載區邏輯 ===
+  function openPreloadMap() {
+    // 借用原本的 Modal 視窗來顯示滿版地圖
+    document.getElementById("modal-title").innerText = "🗺️ 離線地圖範圍預載";
+    
+    // 把原本物種輸入的欄位都先隱藏起來
+    document.querySelector(".qty-controls").style.display = "none";
+    document.getElementById("modal-qty").previousElementSibling.style.display = "none";
+    document.getElementById("modal-notes").style.display = "none";
+    document.getElementById("modal-notes").previousElementSibling.style.display = "none";
+    document.getElementById("btn-open-map").style.display = "none";
+    
+    // 顯示地圖與座標
+    document.getElementById("map-container").style.display = "block";
+    document.getElementById("map-container").style.height = "400px"; // 放大地圖範圍
+    document.getElementById("coords-display").innerText = "定位中，請稍候...";
+    document.getElementById("btn-clear-gps").classList.add("hidden");
+    
+    // 更改底部的按鈕功能
+    const saveBtn = document.querySelector("#modal-content .btn-primary");
+    saveBtn.innerText = "✅ 瀏覽完畢，確認關閉";
+    saveBtn.onclick = function() {
+      // 關閉時把介面復原，以免影響後面的物種紀錄
+      document.querySelector(".qty-controls").style.display = "flex";
+      document.getElementById("modal-qty").previousElementSibling.style.display = "block";
+      document.getElementById("modal-notes").style.display = "block";
+      document.getElementById("modal-notes").previousElementSibling.style.display = "block";
+      document.getElementById("map-container").style.height = "250px";
+      saveBtn.onclick = saveToStaging; // 綁回原本的存檔功能
+      saveBtn.innerText = "💾 存入暫存區";
+      closeModal();
+    };
+
+    document.getElementById("modal-overlay").style.display = "flex";
+
+    // 自動抓取目前位置，或是顯示台灣中心點
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { showMap(pos.coords.latitude, pos.coords.longitude); },
+        (err) => { showMap(23.6978, 120.9605); alert("無法取得GPS，請手動滑動地圖尋找調查樣區。"); },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      showMap(23.6978, 120.9605);
+    }
   }
 </script>
 </body>
