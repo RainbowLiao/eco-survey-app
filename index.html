@@ -178,8 +178,8 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
-  // GAS_URL
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyrXpI--DC_RsszpiNqEbdXRMcy7qLVhgEuAND72oAcija3jnGOlFMyIK0_ApcZgoh6nQ/exec";
+  // GAS_URL_V7
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxdZPTzT2Ir6OKvf4SoYxrvgUnK8hOn8-v7YeqzkiK3Nt0igZW4Ni8Vrxe6dttLEGV1Fw/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
   let speciesCatalog = JSON.parse(localStorage.getItem("speciesCatalog")) || [];
