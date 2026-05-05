@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V4 可離線暫存版)</title>
+  <title>野外生態調查 App (V5 預載搜尋版)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -33,14 +33,12 @@
     .record-name { font-size: 18px; font-weight: bold; }
     .qty-display { font-size: 20px; font-weight: bold; background: #e8f5e9; padding: 5px 15px; border-radius: 20px; color: #2e7d32;}
 
-    /* 暫存區專用樣式 */
     .staging-group { background: #fff; margin-bottom: 10px; border-bottom: 2px solid #2e7d32; padding-bottom: 10px;}
     .staging-header { background: #e8f5e9; padding: 10px 20px; font-weight: bold; color: #2e7d32; font-size: 14px;}
     .staging-item { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
     .staging-checkbox { transform: scale(1.5); margin-right: 15px; }
     .staging-content { flex-grow: 1; }
 
-    /* Modal 樣式 */
     #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; display: none; justify-content: center; align-items: flex-end; }
     #modal-content { background: white; width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; max-height: 90vh; overflow-y: auto;}
     .modal-header { font-size: 22px; font-weight: bold; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between;}
@@ -52,7 +50,6 @@
     
     #map-container { height: 250px; width: 100%; margin-top: 10px; border-radius: 8px; display: none; background: #e0e0e0;}
     
-    /* 底部導覽列 */
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #ddd; display: flex; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); z-index: 80;}
     .nav-btn { flex: 1; padding: 15px 0; text-align: center; font-size: 16px; font-weight: bold; color: #777; cursor: pointer; background: none; border: none; }
     .nav-btn.active { color: #2e7d32; border-top: 3px solid #2e7d32; background: #f1f8e9;}
@@ -69,20 +66,21 @@
   <div id="view-input">
     <div id="screen-metadata" class="section">
       <h2>📋 專案與樣站設定</h2>
-      <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪支流生態專業服務案">
-      <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一">
-      <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪">
-      <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A">
+      <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪支流生態調查專業服務案">
+      <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一(可留白)">
+      <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪周邊(可留白)">
+      <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站1(可留白)">
       
-      <!-- 新增：出發前預載地圖的按鈕 -->
-      <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px dashed #2e7d32;">
-        <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備</p>
-        <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖預載範圍 (有網路時使用)</button>
-        <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">點開後請滑動並放大您預計調查的區域。只要螢幕顯示過的畫面，系統都會自動永久儲存供離線使用。</p>
-      </div>
-      <!-- 新增：即時更新名錄 -->
+      <!-- 更新及時名錄 -->
       <button class="btn-sync" onclick="syncCatalog()" id="btn-sync">🔄 點此從雲端下載最新物種名錄</button>
       <div id="catalog-status" style="text-align: center; font-size: 12px; color: #666; margin-top: 8px;">讀取中...</div>
+
+      <!-- 出發前預載地圖區塊 -->
+      <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 30px; border: 1px dashed #2e7d32;">
+        <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備：預載離線圖資</p>
+        <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖並搜尋樣區</button>
+        <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">請在有網路時打開此功能，移動並放大調查區域，看過的畫面將會永久儲存供離線使用。</p>
+      </div>
 
       <button class="btn-primary" onclick="startSurvey()" style="margin-top: 30px;">開始記錄物種</button>
     </div>
@@ -93,17 +91,14 @@
         <input type="text" id="search-input" placeholder="🔍 搜尋物種 (例: 斯氏)..." oninput="handleSearch()">
         <ul id="autocomplete-list" class="hidden"></ul>
       </div>
-      
-      <!-- 本次樣站新增的物種 (僅顯示) -->
       <div id="current-record-list"></div>
-      
       <div class="section">
-        <button class="btn-secondary" onclick="resetStation()">🔙 結束此樣站，回上一頁切換樣站</button>
+        <button class="btn-secondary" onclick="resetStation()">🔙 結束此樣站，回上一頁</button>
       </div>
     </div>
   </div>
 
-  <!-- 畫面二：暫存區 (Staging) -->
+  <!-- 畫面二：暫存區 -->
   <div id="view-staging" class="hidden" style="background: #f5f5f5; min-height: 100vh;">
     <header style="background: #1565c0;">📦 待上傳暫存區</header>
     <div class="section" style="padding-bottom: 0;">
@@ -113,11 +108,7 @@
         <button class="btn-secondary" style="width: 48%; margin-top:0;" onclick="toggleSelectAll(false)">全不選</button>
       </div>
     </div>
-    
-    <div id="staging-list">
-      <!-- 暫存資料會依樣站分群顯示在這裡 -->
-    </div>
-    
+    <div id="staging-list"></div>
     <div class="section">
       <button class="btn-primary" id="btn-upload" style="background-color: #1565c0;" onclick="uploadSelected()">🚀 上傳選取的資料</button>
       <button class="btn-secondary" style="color: red; border-color: red;" onclick="deleteSelected()">🗑️ 刪除選取資料</button>
@@ -132,26 +123,32 @@
   <button class="nav-btn" id="nav-staging" onclick="switchView('staging')">📦 暫存區 <span id="staging-badge" class="badge hidden">0</span></button>
 </div>
 
-<!-- 物種細節彈出視窗 (Modal) -->
+<!-- 彈出視窗 (Modal) -->
 <div id="modal-overlay">
   <div id="modal-content">
     <div class="modal-header">
       <span id="modal-title">物種名稱</span>
       <span class="close-btn" onclick="closeModal()">✖</span>
     </div>
+
+    <!-- 預載地圖專用的搜尋列 -->
+    <div id="preload-search-bar" class="hidden" style="display: flex; gap: 8px; margin-bottom: 15px;">
+      <input type="text" id="preload-search-input" placeholder="輸入地名(如: 杉林溪) 或 座標(如: 23.6,120.7)" style="margin: 0; flex-grow: 1;">
+      <button class="btn-secondary" style="margin: 0; width: auto; padding: 0 15px; border-color: #1565c0; color: #1565c0;" onclick="searchAndMoveMap()">🔍 跳轉</button>
+    </div>
     
-    <label>數量設定</label>
-    <div class="qty-controls">
+    <label class="input-element">數量設定</label>
+    <div class="qty-controls input-element">
       <button class="qty-btn" onclick="setQty('-')">- (不計數)</button>
       <input type="text" id="modal-qty" class="qty-input">
       <button class="qty-btn" onclick="changeQty(1)">+ 1</button>
     </div>
 
-    <label>備註 (細節)</label>
-    <input type="text" id="modal-notes" placeholder="輸入特徵或備註...">
+    <label class="input-element">備註 (細節)</label>
+    <input type="text" id="modal-notes" class="input-element" placeholder="輸入特徵或備註...">
 
-    <label style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">📍 紀錄當下座標 (自動抓取或展開地圖微調)</label>
-    <button class="btn-secondary" id="btn-open-map" onclick="openMap()">📍 展開 Google 衛星地圖</button>
+    <label class="input-element" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">📍 紀錄當下座標 (自動抓取或展開地圖微調)</label>
+    <button class="btn-secondary input-element" id="btn-open-map" onclick="openMap()">📍 展開 Google 衛星地圖</button>
     
     <div id="map-container"></div>
     
@@ -160,8 +157,7 @@
       <button id="btn-clear-gps" class="hidden" style="background:none; border:none; color:red; cursor:pointer;" onclick="clearMapCoords()">🗑️ 清空座標</button>
     </div>
 
-    <!-- V4：儲存按鈕改為存入暫存區 -->
-    <button class="btn-primary" onclick="saveToStaging()">💾 存入暫存區</button>
+    <button class="btn-primary" id="btn-save-modal" onclick="saveToStaging()">💾 存入暫存區</button>
   </div>
 </div>
 
@@ -170,15 +166,14 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
+  <!-- 雲端資料庫連線 -->
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwj8WjI6OzSMgTGEWp_KJhmnn2EVUL0czo99evC4_BwSZ5Jjcq4gb_KktT_swybk6pT-g/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
   let speciesCatalog = JSON.parse(localStorage.getItem("speciesCatalog")) || [];
-  // V4: 核心資料庫從記憶體改為 localStorage
   let pendingRecords = JSON.parse(localStorage.getItem("pendingRecords")) || [];
-  
   let surveyMetadata = {};
-  let currentSessionRecords = []; // 僅顯示畫面用，不影響儲存
+  let currentSessionRecords = []; 
   let editingSpecies = null; 
   let map, marker;
   let tempLat = null, tempLng = null;
@@ -215,7 +210,6 @@
       });
   }
 
-  // === 畫面切換控制 ===
   function switchView(viewName) {
     document.getElementById("view-input").classList.add("hidden");
     document.getElementById("view-staging").classList.add("hidden");
@@ -225,9 +219,7 @@
     document.getElementById(`view-${viewName}`).classList.remove("hidden");
     document.getElementById(`nav-${viewName}`).classList.add("active");
 
-    if (viewName === 'staging') {
-      renderStaging();
-    }
+    if (viewName === 'staging') renderStaging();
   }
 
   function startSurvey() {
@@ -255,7 +247,6 @@
     document.getElementById("screen-metadata").classList.remove("hidden");
   }
 
-  // === 搜尋與新增邏輯 ===
   function handleSearch() {
     const keyword = document.getElementById("search-input").value.trim();
     const listEl = document.getElementById("autocomplete-list");
@@ -274,29 +265,32 @@
     } else { listEl.classList.add("hidden"); }
   }
 
-  // === Modal 與地圖邏輯 (V4: 打開 Modal 時自動背景抓座標) ===
+  // === Modal 與地圖核心邏輯 ===
   function openModal(species) {
     editingSpecies = species;
     document.getElementById("search-input").value = "";
     document.getElementById("autocomplete-list").classList.add("hidden");
     
+    // 復原為物種輸入模式
     document.getElementById("modal-title").innerText = species.name;
+    document.querySelectorAll(".input-element").forEach(el => el.style.display = "");
+    document.getElementById("preload-search-bar").classList.add("hidden");
+    
     document.getElementById("modal-qty").value = "1";
     document.getElementById("modal-notes").value = "";
-    
-    // 初始化地圖與座標狀態
     document.getElementById("map-container").style.display = "none";
-    document.getElementById("btn-open-map").style.display = "block";
+    document.getElementById("map-container").style.height = "250px";
+    
+    const saveBtn = document.getElementById("btn-save-modal");
+    saveBtn.innerText = "💾 存入暫存區";
+    saveBtn.onclick = saveToStaging;
+
     tempLat = null; tempLng = null;
     updateGpsUI("正在嘗試取得 GPS...");
 
-    // V4: 自動在背景抓取當下座標 (不強迫開地圖)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => { 
-          tempLat = pos.coords.latitude; tempLng = pos.coords.longitude; 
-          updateGpsUI(); 
-        },
+        (pos) => { tempLat = pos.coords.latitude; tempLng = pos.coords.longitude; updateGpsUI(); },
         (err) => { updateGpsUI("無法自動取得GPS (可手動開啟地圖標記)"); },
         { enableHighAccuracy: true, timeout: 4000 }
       );
@@ -316,8 +310,7 @@
   function updateGpsUI(msg) {
     const display = document.getElementById("coords-display");
     if (msg) {
-      display.innerText = msg;
-      display.style.color = "#888";
+      display.innerText = msg; display.style.color = "#888";
       document.getElementById("btn-clear-gps").classList.add("hidden");
     } else if (tempLat && tempLng) {
       display.innerText = `已鎖定: ${tempLng.toFixed(5)}, ${tempLat.toFixed(5)}`;
@@ -330,32 +323,30 @@
     document.getElementById("btn-open-map").style.display = "none";
     document.getElementById("map-container").style.display = "block";
     
-    // 如果已經有背景抓到的座標就直接用，沒有才重抓
     if (tempLat && tempLng) {
       showMap(tempLat, tempLng);
     } else if (navigator.geolocation) {
       document.getElementById("coords-display").innerText = "GPS 定位中...";
       navigator.geolocation.getCurrentPosition(
         (pos) => { showMap(pos.coords.latitude, pos.coords.longitude); },
-        (err) => { alert("無 GPS 訊號！您可以直接拖動地圖。"); showMap(23.5, 121); },
+        (err) => { alert("無 GPS 訊號！請直接拖動地圖。"); showMap(23.6978, 120.9605); },
         { enableHighAccuracy: true, timeout: 5000 }
       );
-    }
+    } else { showMap(23.6978, 120.9605); }
   }
 
   function showMap(lat, lng) {
     tempLat = lat; tempLng = lng;
     updateGpsUI();
     if (!map) {
-      map = L.map('map-container').setView([lat, lng], 17);
-      // V4: 改用 Google 衛星混合圖層 (Offline 時若無快取會灰白，但座標有效)
+      map = L.map('map-container').setView([lat, lng], 16);
       L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }).addTo(map);
       marker = L.marker([lat, lng], {draggable: true}).addTo(map);
       marker.on('dragend', function(e){
         tempLat = e.target.getLatLng().lat; tempLng = e.target.getLatLng().lng; updateGpsUI();
       });
     } else {
-      map.setView([lat, lng], 17); marker.setLatLng([lat, lng]);
+      map.setView([lat, lng], 16); marker.setLatLng([lat, lng]);
     }
     setTimeout(() => map.invalidateSize(), 300);
   }
@@ -367,7 +358,66 @@
     updateGpsUI("座標已清空");
   }
 
-  // === V4 儲存邏輯 (寫入 localStorage 暫存區) ===
+  // === V5 地圖預載與搜尋 ===
+  function openPreloadMap() {
+    document.getElementById("modal-title").innerText = "🗺️ 離線地圖範圍預載";
+    
+    // 隱藏一般輸入的 UI
+    document.querySelectorAll(".input-element").forEach(el => el.style.display = "none");
+    document.getElementById("preload-search-bar").classList.remove("hidden");
+    
+    document.getElementById("map-container").style.display = "block";
+    document.getElementById("map-container").style.height = "400px"; 
+    document.getElementById("coords-display").innerText = "滑動地圖以暫存畫面...";
+    document.getElementById("btn-clear-gps").classList.add("hidden");
+    
+    const saveBtn = document.getElementById("btn-save-modal");
+    saveBtn.innerText = "✅ 瀏覽完畢，確認關閉";
+    saveBtn.onclick = closeModal;
+
+    document.getElementById("modal-overlay").style.display = "flex";
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { showMap(pos.coords.latitude, pos.coords.longitude); },
+        (err) => { showMap(23.6978, 120.9605); },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else { showMap(23.6978, 120.9605); }
+  }
+
+  function searchAndMoveMap() {
+    const query = document.getElementById("preload-search-input").value.trim();
+    if (!query) return alert("請輸入地點或座標！");
+
+    const btn = document.querySelector("#preload-search-bar button");
+    btn.innerText = "⏳";
+
+    // 判斷是否為座標 (例: 23.64, 120.78)
+    const coordsMatch = query.match(/^(\d+(\.\d+)?)\s*,\s*(\d+(\.\d+)?)$/);
+    if (coordsMatch) {
+      const lat = parseFloat(coordsMatch[1]); const lng = parseFloat(coordsMatch[3]);
+      if (map) { map.setView([lat, lng], 16); if (marker) marker.setLatLng([lat, lng]); } 
+      else showMap(lat, lng);
+      btn.innerText = "🔍 跳轉"; return;
+    }
+
+    // 使用 OSM Nominatim 搜尋地名
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " 台灣")}`)
+      .then(res => res.json())
+      .then(data => {
+        btn.innerText = "🔍 跳轉";
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat); const lng = parseFloat(data[0].lon);
+          if (map) { map.setView([lat, lng], 16); if (marker) marker.setLatLng([lat, lng]); }
+          else showMap(lat, lng);
+        } else { alert("找不到該地點，請輸入更精確的名稱或使用 WGS84 座標。"); }
+      }).catch(e => {
+        btn.innerText = "🔍 跳轉"; alert("搜尋失敗，請檢查網路連線。");
+      });
+  }
+
+  // === 儲存與上傳邏輯 ===
   function saveToStaging() {
     let wgs_x = "", wgs_y = "", twd_x = "", twd_y = "";
     if (tempLat && tempLng) {
@@ -375,28 +425,13 @@
       wgs_x = tempLng.toFixed(6); wgs_y = tempLat.toFixed(6);
       twd_x = twd97[0].toFixed(2); twd_y = twd97[1].toFixed(2);
     }
-
     const newRecord = {
-      id: Date.now(), // 唯一碼
-      metadata: JSON.parse(JSON.stringify(surveyMetadata)), // 複製當下 metadata
-      record: {
-        group: editingSpecies.group,
-        name: editingSpecies.name,
-        quantity: document.getElementById("modal-qty").value,
-        notes: document.getElementById("modal-notes").value,
-        wgs84_x: wgs_x, wgs84_y: wgs_y, twd97_x: twd_x, twd97_y: twd_y
-      }
+      id: Date.now(), 
+      metadata: JSON.parse(JSON.stringify(surveyMetadata)),
+      record: { group: editingSpecies.group, name: editingSpecies.name, quantity: document.getElementById("modal-qty").value, notes: document.getElementById("modal-notes").value, wgs84_x: wgs_x, wgs84_y: wgs_y, twd97_x: twd_x, twd97_y: twd_y }
     };
-
-    // 存入全域陣列並同步到 localStorage
-    pendingRecords.push(newRecord);
-    localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
-    
-    // UI 顯示
-    currentSessionRecords.unshift(newRecord.record); // 加到畫面最上方
-    renderCurrentSession();
-    updateStagingBadge();
-    closeModal();
+    pendingRecords.push(newRecord); localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
+    currentSessionRecords.unshift(newRecord.record); renderCurrentSession(); updateStagingBadge(); closeModal();
   }
 
   function renderCurrentSession() {
@@ -405,39 +440,25 @@
     currentSessionRecords.forEach(r => {
       listEl.innerHTML += `
         <div class="record-item" style="cursor:default;">
-          <div>
-            <div class="record-name">${r.name}</div>
-            <div style="font-size:12px;color:#888;">${r.wgs84_x ? '📍已綁定座標' : '無座標'}</div>
-          </div>
+          <div><div class="record-name">${r.name}</div><div style="font-size:12px;color:#888;">${r.wgs84_x ? '📍已綁定座標' : '無座標'}</div></div>
           <div class="qty-display">${r.quantity}</div>
         </div>`;
     });
   }
 
-  // === 暫存區 (Staging) 邏輯 ===
   function updateStagingBadge() {
-    const badge = document.getElementById("staging-badge");
-    badge.innerText = pendingRecords.length;
-    if (pendingRecords.length > 0) badge.classList.remove("hidden");
-    else badge.classList.add("hidden");
+    const badge = document.getElementById("staging-badge"); badge.innerText = pendingRecords.length;
+    if (pendingRecords.length > 0) badge.classList.remove("hidden"); else badge.classList.add("hidden");
   }
 
   function renderStaging() {
-    const listEl = document.getElementById("staging-list");
-    listEl.innerHTML = "";
-    if (pendingRecords.length === 0) {
-      listEl.innerHTML = "<div style='text-align:center; padding: 40px; color:#888;'>暫存區沒有資料</div>";
-      return;
-    }
-
-    // 將資料依據 "樣站" 分群顯示
+    const listEl = document.getElementById("staging-list"); listEl.innerHTML = "";
+    if (pendingRecords.length === 0) { listEl.innerHTML = "<div style='text-align:center; padding: 40px; color:#888;'>暫存區沒有資料</div>"; return; }
     const groups = {};
     pendingRecords.forEach(item => {
       const key = `${item.metadata.location} ${item.metadata.station ? '- ' + item.metadata.station : ''}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
+      if (!groups[key]) groups[key] = []; groups[key].push(item);
     });
-
     for (let key in groups) {
       let groupHtml = `<div class="staging-group"><div class="staging-header">${key}</div>`;
       groups[key].forEach(item => {
@@ -447,121 +468,49 @@
             <input type="checkbox" class="staging-checkbox" value="${item.id}" checked>
             <div class="staging-content">
               <div class="record-name" style="font-size:16px;">${r.name} <span style="font-size:14px; color:#2e7d32; font-weight:normal; margin-left:10px;">數量: ${r.quantity}</span></div>
-              <div style="font-size:12px; color:#888; margin-top:4px;">
-                ${r.notes ? '📝'+r.notes + ' ' : ''} ${r.wgs84_x ? '📍有座標' : ''}
-              </div>
+              <div style="font-size:12px; color:#888; margin-top:4px;">${r.notes ? '📝'+r.notes + ' ' : ''} ${r.wgs84_x ? '📍有座標' : ''}</div>
             </div>
           </div>`;
       });
-      groupHtml += `</div>`;
-      listEl.innerHTML += groupHtml;
+      groupHtml += `</div>`; listEl.innerHTML += groupHtml;
     }
   }
 
-  function toggleSelectAll(check) {
-    document.querySelectorAll('.staging-checkbox').forEach(cb => cb.checked = check);
-  }
-
+  function toggleSelectAll(check) { document.querySelectorAll('.staging-checkbox').forEach(cb => cb.checked = check); }
   function deleteSelected() {
     const selectedIds = Array.from(document.querySelectorAll('.staging-checkbox:checked')).map(cb => parseInt(cb.value));
     if (selectedIds.length === 0) return alert("請先勾選要刪除的資料！");
-    if (confirm(`確定要刪除選取的 ${selectedIds.length} 筆資料嗎？此操作無法還原。`)) {
+    if (confirm(`確定要刪除選取的 ${selectedIds.length} 筆資料嗎？`)) {
       pendingRecords = pendingRecords.filter(item => !selectedIds.includes(item.id));
-      localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
-      renderStaging(); updateStagingBadge();
+      localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords)); renderStaging(); updateStagingBadge();
     }
   }
 
-  // === 批次上傳邏輯 (解決 GPS 衝突與群組對應) ===
   function uploadSelected() {
     const selectedIds = Array.from(document.querySelectorAll('.staging-checkbox:checked')).map(cb => parseInt(cb.value));
     if (selectedIds.length === 0) return alert("請先勾選要上傳的資料！");
-    
-    const btn = document.getElementById("btn-upload");
-    btn.innerText = "📤 正在上傳中，請稍候..."; btn.disabled = true;
+    const btn = document.getElementById("btn-upload"); btn.innerText = "📤 正在上傳中，請稍候..."; btn.disabled = true;
 
-    // 將選取的資料挑出來，並依照 metadata 分群打包
     const itemsToUpload = pendingRecords.filter(item => selectedIds.includes(item.id));
-    const payloads = {}; // { "signature" : { metadata: {}, records: [] } }
-
+    const payloads = {}; 
     itemsToUpload.forEach(item => {
       const sig = `${item.metadata.project}_${item.metadata.area}_${item.metadata.location}_${item.metadata.station}`;
-      if (!payloads[sig]) {
-        payloads[sig] = { metadata: item.metadata, records: [] };
-      }
+      if (!payloads[sig]) payloads[sig] = { metadata: item.metadata, records: [] };
       payloads[sig].records.push(item.record);
     });
 
-    // 依序發送請求 (避免 GAS 單次處理過載)
     let uploadPromises = Object.values(payloads).map(payload => {
-      return fetch(GAS_URL, {
-        method: "POST",
-        redirect: "follow",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      }).then(r => r.json());
+      return fetch(GAS_URL, { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }).then(r => r.json());
     });
 
-    Promise.all(uploadPromises)
-      .then(results => {
-        // 只要沒有 throw error，視為成功。將上傳成功的資料從暫存區刪除
-        pendingRecords = pendingRecords.filter(item => !selectedIds.includes(item.id));
-        localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
-        
-        alert("✅ 選取的資料已成功上傳至 Google Sheets！");
-        renderStaging(); updateStagingBadge();
-        btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
-      })
-      .catch(e => {
-        alert("❌ 上傳失敗，請確認網路有訊號後再試一次！");
-        btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
-      });
-  }
-  // === V5 新增：地圖預載區邏輯 ===
-  function openPreloadMap() {
-    // 借用原本的 Modal 視窗來顯示滿版地圖
-    document.getElementById("modal-title").innerText = "🗺️ 離線地圖範圍預載";
-    
-    // 把原本物種輸入的欄位都先隱藏起來
-    document.querySelector(".qty-controls").style.display = "none";
-    document.getElementById("modal-qty").previousElementSibling.style.display = "none";
-    document.getElementById("modal-notes").style.display = "none";
-    document.getElementById("modal-notes").previousElementSibling.style.display = "none";
-    document.getElementById("btn-open-map").style.display = "none";
-    
-    // 顯示地圖與座標
-    document.getElementById("map-container").style.display = "block";
-    document.getElementById("map-container").style.height = "400px"; // 放大地圖範圍
-    document.getElementById("coords-display").innerText = "定位中，請稍候...";
-    document.getElementById("btn-clear-gps").classList.add("hidden");
-    
-    // 更改底部的按鈕功能
-    const saveBtn = document.querySelector("#modal-content .btn-primary");
-    saveBtn.innerText = "✅ 瀏覽完畢，確認關閉";
-    saveBtn.onclick = function() {
-      // 關閉時把介面復原，以免影響後面的物種紀錄
-      document.querySelector(".qty-controls").style.display = "flex";
-      document.getElementById("modal-qty").previousElementSibling.style.display = "block";
-      document.getElementById("modal-notes").style.display = "block";
-      document.getElementById("modal-notes").previousElementSibling.style.display = "block";
-      document.getElementById("map-container").style.height = "250px";
-      saveBtn.onclick = saveToStaging; // 綁回原本的存檔功能
-      saveBtn.innerText = "💾 存入暫存區";
-      closeModal();
-    };
-
-    document.getElementById("modal-overlay").style.display = "flex";
-
-    // 自動抓取目前位置，或是顯示台灣中心點
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { showMap(pos.coords.latitude, pos.coords.longitude); },
-        (err) => { showMap(23.6978, 120.9605); alert("無法取得GPS，請手動滑動地圖尋找調查樣區。"); },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    } else {
-      showMap(23.6978, 120.9605);
-    }
+    Promise.all(uploadPromises).then(results => {
+      pendingRecords = pendingRecords.filter(item => !selectedIds.includes(item.id));
+      localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
+      alert("✅ 選取的資料已成功上傳至 Google Sheets！");
+      renderStaging(); updateStagingBadge(); btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
+    }).catch(e => {
+      alert("❌ 上傳失敗，請確認網路有訊號後再試一次！"); btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
+    });
   }
 </script>
 </body>
