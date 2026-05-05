@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V5.1 預載+進度條版)</title>
+  <title>野外生態調查 App (V6 資安與空間優化版)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -17,15 +17,16 @@
     .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; display: flex; flex-direction: column; position: relative;}
     header { background-color: #2e7d32; color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top:0; z-index: 50;}
     .section { padding: 20px; }
+    h1 { font-size: 24px; color: #1b5e20; text-align: center; margin-bottom: 5px;}
+    h2 { font-size: 18px; color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px;}
     label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-    input[type="text"], input[type="checkbox"] { box-sizing: border-box; }
-    input[type="text"] { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+    input[type="text"], input[type="password"], input[type="checkbox"] { box-sizing: border-box; }
+    input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
     
     .btn-primary { background-color: #2e7d32; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     .btn-secondary { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; padding: 10px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px;}
     .btn-sync { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;}
     
-    /* 進度條樣式回歸 */
     #progress-container { width: 100%; background-color: #ffe0b2; border-radius: 8px; margin-top: 15px; overflow: hidden; display: none; height: 12px; }
     #progress-bar { width: 0%; height: 100%; background-color: #e65100; transition: width 0.3s ease; }
     
@@ -68,16 +69,20 @@
   
   <div id="view-input">
     <div id="screen-metadata" class="section">
-      <h1>生態調查即時資料處理系統</h1>
+      <!-- 依照您的需求修改的標題與輸入框 -->
+      <h2>生態調查即時資料處理系統</h2>
       <h2>📋 專案與樣站設定</h2>
       <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪周邊生態調查案">
       <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一(可留白)">
       <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪周邊(可留白)">
       <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A(可留白)">
       
+      <!-- 新增：資安授權碼 -->
+      <label style="color: #d32f2f;">🔐 系統授權碼 (連接雲端必填)</label>
+      <input type="password" id="sys-auth" placeholder="請輸入公司授權碼" style="border-color: #d32f2f;">
+
       <button class="btn-sync" onclick="syncCatalog()" id="btn-sync">🔄 點此從雲端下載最新物種名錄</button>
       
-      <!-- 進度條區塊回歸 -->
       <div id="progress-container">
         <div id="progress-bar"></div>
       </div>
@@ -88,6 +93,9 @@
         <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32; font-weight: bold;">🏕️ 出發前準備：預載離線圖資</p>
         <button class="btn-secondary" style="margin-top: 0; border-color:#2e7d32; color:#2e7d32;" onclick="openPreloadMap()">🗺️ 打開地圖並搜尋樣區</button>
         <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">請在有網路時打開此功能，移動並放大調查區域，看過的畫面將會永久儲存供離線使用。</p>
+        
+        <!-- 新增：清除離線地圖空間按鈕 -->
+        <button class="btn-secondary" style="margin-top: 15px; border-color:#d32f2f; color:#d32f2f; background-color: #ffebee;" onclick="clearMapCache()">🗑️ 清除已下載的離線地圖 (釋放手機空間)</button>
       </div>
 
       <button class="btn-primary" onclick="startSurvey()" style="margin-top: 30px;">開始記錄物種</button>
@@ -170,7 +178,8 @@
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
   }
 
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwj8WjI6OzSMgTGEWp_KJhmnn2EVUL0czo99evC4_BwSZ5Jjcq4gb_KktT_swybk6pT-g/exec";
+  // GAS_URL
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyrXpI--DC_RsszpiNqEbdXRMcy7qLVhgEuAND72oAcija3jnGOlFMyIK0_ApcZgoh6nQ/exec";
   proj4.defs("EPSG:3826", "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
   let speciesCatalog = JSON.parse(localStorage.getItem("speciesCatalog")) || [];
@@ -184,6 +193,9 @@
   window.onload = function() {
     updateCatalogStatus();
     updateStagingBadge();
+    // 自動填入上次輸入的授權碼
+    const savedAuth = localStorage.getItem("sysAuthCode");
+    if(savedAuth) document.getElementById("sys-auth").value = savedAuth;
   }
 
   function updateCatalogStatus() {
@@ -194,18 +206,34 @@
     }
   }
 
-  // === 恢復 V3.2 的進度條邏輯 ===
+  // === 清除地圖快取功能 ===
+  function clearMapCache() {
+    if(confirm("確定要清除所有預載的離線地圖嗎？這將釋放手機空間，但斷網時將無法查看地圖。")) {
+      if ('caches' in window) {
+        caches.delete('eco-map-tiles').then(function(success) {
+          if(success) alert("✅ 離線地圖快取已成功清除！空間已釋放。");
+          else alert("目前沒有佔用空間的離線地圖。");
+        });
+      }
+    }
+  }
+
+  // === 下載名錄 (帶入密碼驗證) ===
   function syncCatalog() {
+    const authCode = document.getElementById("sys-auth").value.trim();
+    if(!authCode) return alert("請先輸入系統授權碼！");
+    localStorage.setItem("sysAuthCode", authCode); // 儲存密碼
+
     const btn = document.getElementById("btn-sync");
     const progressContainer = document.getElementById("progress-container");
     const progressBar = document.getElementById("progress-bar");
     const statusText = document.getElementById("catalog-status");
 
-    btn.innerText = "⏳ 下載名錄中，請勿關閉視窗...";
+    btn.innerText = "⏳ 驗證並下載名錄中...";
     btn.disabled = true;
     progressContainer.style.display = "block";
     progressBar.style.width = "0%";
-    statusText.innerText = "正在向伺服器請求資料...";
+    statusText.innerText = "正在連線伺服器...";
 
     let progress = 0;
     let simInterval = setInterval(() => {
@@ -214,7 +242,8 @@
       progressBar.style.width = progress + "%";
     }, 200);
 
-    fetch(GAS_URL)
+    // 將密碼附加在網址後面傳送
+    fetch(GAS_URL + "?auth=" + encodeURIComponent(authCode))
       .then(response => response.json())
       .then(data => {
         clearInterval(simInterval);
@@ -223,12 +252,12 @@
 
         setTimeout(() => {
           if (data.error) {
-            alert("❌ 下載錯誤：" + data.error);
+            alert("❌ " + data.error); // 若密碼錯誤，顯示後端錯誤訊息
           } else {
             speciesCatalog = data;
             localStorage.setItem("speciesCatalog", JSON.stringify(data));
             statusText.innerText = `已載入 ${data.length} 筆離線名錄`;
-            alert(`✅ 雲端名錄更新成功！共載入 ${data.length} 筆物種。現在您可以斷網使用了。`);
+            alert(`✅ 雲端名錄更新成功！共載入 ${data.length} 筆物種。`);
           }
           
           btn.innerText = "🔄 點此從雲端下載最新物種名錄";
@@ -260,7 +289,7 @@
   }
 
   function startSurvey() {
-    if(speciesCatalog.length === 0) return alert("請先下載名錄！");
+    if(speciesCatalog.length === 0) return alert("請先輸入授權碼並下載名錄！");
     surveyMetadata = {
       project: document.getElementById("meta-project").value,
       area: document.getElementById("meta-area").value,
@@ -269,7 +298,7 @@
       surveyTime: new Date().toLocaleString('zh-TW', { hour12: false })
     };
     
-    let displayMeta = `${surveyMetadata.location}`;
+    let displayMeta = `${surveyMetadata.location || '未填寫地點'}`;
     if (surveyMetadata.station) displayMeta += ` - ${surveyMetadata.station}`;
     document.getElementById("header-meta").innerText = displayMeta;
     
@@ -486,7 +515,7 @@
     if (pendingRecords.length === 0) { listEl.innerHTML = "<div style='text-align:center; padding: 40px; color:#888;'>暫存區沒有資料</div>"; return; }
     const groups = {};
     pendingRecords.forEach(item => {
-      const key = `${item.metadata.location} ${item.metadata.station ? '- ' + item.metadata.station : ''}`;
+      const key = `${item.metadata.location || '未填寫地點'} ${item.metadata.station ? '- ' + item.metadata.station : ''}`;
       if (!groups[key]) groups[key] = []; groups[key].push(item);
     });
     for (let key in groups) {
@@ -516,7 +545,14 @@
     }
   }
 
+  // === 上傳資料 (加入密碼驗證) ===
   function uploadSelected() {
+    const authCode = document.getElementById("sys-auth").value.trim();
+    if(!authCode) {
+      switchView('input'); // 切換回首頁讓他填密碼
+      return alert("請先在首頁填寫系統授權碼！");
+    }
+
     const selectedIds = Array.from(document.querySelectorAll('.staging-checkbox:checked')).map(cb => parseInt(cb.value));
     if (selectedIds.length === 0) return alert("請先勾選要上傳的資料！");
     const btn = document.getElementById("btn-upload"); btn.innerText = "📤 正在上傳中，請稍候..."; btn.disabled = true;
@@ -525,7 +561,8 @@
     const payloads = {}; 
     itemsToUpload.forEach(item => {
       const sig = `${item.metadata.project}_${item.metadata.area}_${item.metadata.location}_${item.metadata.station}`;
-      if (!payloads[sig]) payloads[sig] = { metadata: item.metadata, records: [] };
+      // 將 authCode 塞入上傳的包裹中，讓 GAS 後端驗證
+      if (!payloads[sig]) payloads[sig] = { auth: authCode, metadata: item.metadata, records: [] };
       payloads[sig].records.push(item.record);
     });
 
@@ -534,6 +571,14 @@
     });
 
     Promise.all(uploadPromises).then(results => {
+      // 檢查是否被密碼阻擋
+      const authError = results.find(res => res.error || res.status === "error");
+      if (authError) {
+        alert("❌ " + (authError.message || authError.error));
+        btn.innerText = "🚀 上傳選取的資料"; btn.disabled = false;
+        return;
+      }
+
       pendingRecords = pendingRecords.filter(item => !selectedIds.includes(item.id));
       localStorage.setItem("pendingRecords", JSON.stringify(pendingRecords));
       alert("✅ 選取的資料已成功上傳至 Google Sheets！");
