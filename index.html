@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>野外生態調查 App (V4 離線暫存版)</title>
+  <title>野外生態調查 App (V4 可離線暫存版)</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2e7d32">
@@ -69,9 +69,9 @@
   <div id="view-input">
     <div id="screen-metadata" class="section">
       <h2>📋 專案與樣站設定</h2>
-      <label>調查案件</label><input type="text" id="meta-project" value="--">
-      <label>工區</label><input type="text" id="meta-area" value="--">
-      <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪周邊">
+      <label>調查案件</label><input type="text" id="meta-project" placeholder="例如：加走寮溪支流生態專業服務案">
+      <label>工區</label><input type="text" id="meta-area" placeholder="例如：工區一">
+      <label>調查地點</label><input type="text" id="meta-location" placeholder="例如：加走寮溪">
       <label>樣站(區)</label><input type="text" id="meta-station" placeholder="例如：水域樣站A">
       
       <button class="btn-sync" onclick="syncCatalog()" id="btn-sync">🔄 點此從雲端下載最新物種名錄</button>
