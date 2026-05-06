@@ -1,5 +1,5 @@
 # 生態調查資料輸入系統
-### Produce by Rainbow Liao
+### Produced by Rainbow Liao
 ### Website App url
 https://rainbowliao.github.io/eco-survey-app/
 #### 1.可預載調查區域離線地圖(可定期清理暫存)
