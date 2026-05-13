@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eco-survey-v3';
+const CACHE_NAME = 'eco-survey-v4';
 const MAP_CACHE = 'eco-map-tiles'; // 專門用來放地圖圖資的百寶箱
 
 const urlsToCache = [
